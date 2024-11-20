@@ -1,5 +1,25 @@
-// Sección de usuarios simulada
-let usuarios = JSON.parse(localStorage.getItem('usuarios')) || [];
+// Importar módulo para manejo de archivos
+const fs = require('fs');
+
+// Función para guardar usuarios en un archivo JSON
+function guardarUsuariosEnArchivo() {
+    fs.writeFileSync('usuarios.json', JSON.stringify(usuarios, null, 2));
+    console.log('Usuarios guardados en usuarios.json');
+}
+
+// Función para cargar usuarios desde un archivo JSON
+function cargarUsuariosDesdeArchivo() {
+    try {
+        const data = fs.readFileSync('usuarios.json', 'utf8');
+        return JSON.parse(data);
+    } catch (error) {
+        console.log('No se pudo cargar usuarios. Archivo vacío o no existe.');
+        return [];
+    }
+}
+
+// Sección de usuarios simulada cargada desde el archivo JSON
+let usuarios = cargarUsuariosDesdeArchivo();
 
 // Función para mostrar u ocultar secciones
 function mostrarSeccion(seccion) {
@@ -7,39 +27,32 @@ function mostrarSeccion(seccion) {
     const registerSection = document.getElementById('registerSection');
     const calcSection = document.getElementById('calcSection');
 
-    // Ocultar todas las secciones
     loginSection.style.display = 'none';
     registerSection.style.display = 'none';
     calcSection.style.display = 'none';
 
-    // Mostrar la sección correspondiente
-    if (seccion === 'login') {
-        loginSection.style.display = 'block';
-    } else if (seccion === 'register') {
-        registerSection.style.display = 'block';
-    } else if (seccion === 'calc') {
-        calcSection.style.display = 'block';
-    }
+    if (seccion === 'login') loginSection.style.display = 'block';
+    else if (seccion === 'register') registerSection.style.display = 'block';
+    else if (seccion === 'calc') calcSection.style.display = 'block';
 }
 
-// Mostrar sección de registro al hacer clic en 'Registrarse'
+// Mostrar sección de registro
 document.getElementById('goToRegister').addEventListener('click', function(e) {
     e.preventDefault();
-    mostrarSeccion('register'); // Muestra la sección de registro
+    mostrarSeccion('register');
 });
 
-// Mostrar sección de login al hacer clic en 'Iniciar Sesión'
+// Mostrar sección de login
 document.getElementById('goToLogin').addEventListener('click', function(e) {
     e.preventDefault();
-    mostrarSeccion('login'); // Muestra la sección de login
+    mostrarSeccion('login');
 });
 
-// Función de clasificación de la fuerza de la contraseña
+// Clasificación de fuerza de contraseña
 function clasificarFuerzaContraseña(password) {
     const passwordStrengthMessage = document.getElementById('password-strength-message');
     const registerButton = document.getElementById('register-btn');
 
-    // Condiciones de fuerza de la contraseña
     if (password.length < 8) {
         passwordStrengthMessage.textContent = 'Contraseña mala: debe tener al menos 8 caracteres.';
         registerButton.disabled = true;
@@ -57,7 +70,7 @@ function clasificarFuerzaContraseña(password) {
     return 'buena';
 }
 
-// Escuchar evento de input en el campo de la contraseña
+// Evento de input en contraseña
 document.getElementById('register-password').addEventListener('input', function() {
     const password = document.getElementById('register-password').value;
     clasificarFuerzaContraseña(password);
@@ -69,29 +82,22 @@ document.getElementById('register-form').addEventListener('submit', function(e) 
     const username = document.getElementById('register-username').value;
     const password = document.getElementById('register-password').value;
 
-    if (clasificarFuerzaContraseña(password) !== 'buena') {
-        return; // No permite registrar si la contraseña no es buena
-    }
+    if (clasificarFuerzaContraseña(password) !== 'buena') return;
 
     if (!usuarios.some(user => user.username === username)) {
         usuarios.push({ username, password });
-        localStorage.setItem('usuarios', JSON.stringify(usuarios));
+        guardarUsuariosEnArchivo();
         alert('Usuario registrado con éxito.');
-        mostrarSeccion('login'); // Redirige al login después del registro
+        mostrarSeccion('login');
     } else {
         alert('El usuario ya existe.');
     }
 });
 
-// Función para validar el inicio de sesión
+// Validación de login
 function validarLogin(username, password) {
     const usuario = usuarios.find(user => user.username === username);
-
-    if (usuario && usuario.password === password) {
-        return true; // Login exitoso
-    } else {
-        return false; // Login fallido
-    }
+    return usuario && usuario.password === password;
 }
 
 // Ingreso de usuario
@@ -102,39 +108,38 @@ document.getElementById('login-form').addEventListener('submit', function(e) {
 
     if (validarLogin(username, password)) {
         alert('Ingreso exitoso');
-        mostrarSeccion('calc'); // Redirige a la sección de cálculo de agua
+        mostrarSeccion('calc');
     } else {
         alert('Usuario o contraseña incorrectos');
     }
 });
 
-// Método de ordenamiento burbuja (Bubble Sort)
+// Ordenamiento de usuarios (Bubble Sort)
 function ordenarUsuariosPorNombre() {
     for (let i = 0; i < usuarios.length - 1; i++) {
         for (let j = 0; j < usuarios.length - i - 1; j++) {
             if (usuarios[j].username > usuarios[j + 1].username) {
-                // Intercambiar los usuarios
                 let temp = usuarios[j];
                 usuarios[j] = usuarios[j + 1];
                 usuarios[j + 1] = temp;
             }
         }
     }
-    localStorage.setItem('usuarios', JSON.stringify(usuarios)); // Actualizar los usuarios en localStorage
+    guardarUsuariosEnArchivo();
     alert('Usuarios ordenados correctamente por nombre.');
 }
 
-// Método de búsqueda secuencial
+// Búsqueda de usuario
 function buscarUsuario(username) {
     for (let i = 0; i < usuarios.length; i++) {
         if (usuarios[i].username === username) {
-            return usuarios[i]; // Retorna el usuario si lo encuentra
+            return usuarios[i];
         }
     }
-    return null; // Si no lo encuentra
+    return null;
 }
 
-// Ejemplo de uso de la búsqueda
+// Ejemplo de uso de búsqueda
 document.getElementById('search-user-btn').addEventListener('click', function() {
     const username = prompt('Introduce el nombre de usuario a buscar:');
     const user = buscarUsuario(username);
@@ -146,5 +151,5 @@ document.getElementById('search-user-btn').addEventListener('click', function() 
     }
 });
 
-// Mostrar la sección de login al cargar la página inicialmente
+// Mostrar la sección de login al inicio
 mostrarSeccion('login');
